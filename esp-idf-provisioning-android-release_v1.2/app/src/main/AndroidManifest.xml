@@ -23,7 +23,7 @@
         <activity
             android:name="com.espressif.ui.activities.EspMainActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
-            android:label="@string/app_name"
+            android:label="ESP32 vezérlő"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>

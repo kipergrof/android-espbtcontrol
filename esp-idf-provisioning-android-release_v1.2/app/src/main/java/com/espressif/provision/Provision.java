@@ -258,6 +258,7 @@ public class Provision {
             CustomConfig.CustomConfigResponse customConfigResponse = CustomConfig.CustomConfigResponse.parseFrom(decryptedData);
             //WifiConfig.WiFiConfigPayload wiFiConfigPayload = WifiConfig.WiFiConfigPayload.parseFrom(decryptedData);
             status = customConfigResponse.getStatus();
+            Log.e(TAG,String.valueOf(customConfigResponse.getDummy()));
             //status = wiFiConfigPayload.getRespSetConfig().getStatus();
         } catch (InvalidProtocolBufferException e) {
             e.printStackTrace();

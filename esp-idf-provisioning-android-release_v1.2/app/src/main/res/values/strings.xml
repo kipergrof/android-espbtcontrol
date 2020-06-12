@@ -14,9 +14,21 @@
     <string name="provision">Provision</string>
     <string name="dialog_msg_for_gps">Location services are disabled. Please enable them to continue</string>
 
+
+    <string name="mode">Mode</string>
+    <string name="pid">PID</string>
+    <string name="init_speed">Speed</string>
+    <string name="init_size">Size</string>
+
+
+    <string-array name="uuids">
+        <item>test1</item>
+        <item>test3</item>
+        <item>test5</item>
+    </string-array>
     <string name="success_text">Device has been successfully provisioned!</string>
     <string name="wifi_disconnected_text">Please check the device indicators for provisioning status.</string>
-    <string name="done">Done</string>
+    <string name="done">Kész</string>
 
     <string name="enable_bluetooth_instructions">To provision your new device, please make sure that your Phone\'s Bluetooth is turned on and within range of your new device.</string>
     <string name="enabled_bluetooth_instructions">To provision the device, please enter your Network credentials on the next page.</string>
@@ -25,13 +37,13 @@
 
     <!--Strings used for Buttons-->
     <string name="btn_start_provisioning">Kezdés</string>
-    <string name="btn_scan_again">Scan Again</string>
+    <string name="btn_scan_again">Ujra keresés</string>
     <string name="btn_sign_in_amazon">Sign in with Amazon</string>
     <string name="btn_do_it_later">Do It Later</string>
     <string name="btn_sign_out">Sign Out</string>
     <string name="btn_skip">Skip</string>
     <string name="btn_next">Next</string>
-    <string name="btn_change_prefix">Change</string>
+    <string name="btn_change_prefix">Változtatás</string>
     <string name="btn_save">Save</string>
     <string name="btn_ok">Ok</string>
     <string name="btn_cancel">Cancel</string>
@@ -51,16 +63,16 @@
     <string name="error_pop_incorrect">Error establishing session.\n Check if Proof of Possession(POP) is correct!</string>
 
     <!--Screen titles-->
-    <string name="title_activity_connect_device">Connect to Device</string>
+    <string name="title_activity_connect_device">Csatlakozás az eszközhöz</string>
     <string name="title_activity_pop">Proof Of Possession</string>
     <string name="title_activity_wifi_scan_list">Wi-Fi List</string>
-    <string name="title_activity_provision">Provision</string>
+    <string name="title_activity_provision"></string>
     <string name="title_activity_provision_success">ProvisionSuccessActivity</string>
 
-    <string name="prefix">Prefix :</string>
+    <string name="prefix">Szűrő :</string>
     <string name="hint_prefix">Enter Prefix</string>
     <string name="hint_key">Enter PIN</string>
-    <string name="devices_title">Devices</string>
+    <string name="devices_title">Eszközök</string>
     <string name="enter_device_key">Enter Your Proof Of Possession PIN</string>
 
     <string name="join_other_network">Join Other Network</string>

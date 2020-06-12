@@ -25,9 +25,15 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
+import android.widget.Adapter;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -44,16 +50,17 @@ import com.espressif.provision.transport.Transport;
 import espressif.Constants;
 import espressif.WifiConstants;
 
-public class ProvisionActivity extends AppCompatActivity {
+public class ProvisionActivity extends AppCompatActivity  {
 
     private static final String TAG = "Espressif::" + ProvisionActivity.class.getSimpleName();
 
-    private TextView ssid;
+    private Spinner uuidList;
     private EditText ssidInput;
     private EditText passwordInput;
     private Button btnProvision;
     private ProgressBar progressBar;
 
+    private byte uuid_id;
     private int wifiSecurityType;
     private String ssidValue, passphraseValue = "";
     private String pop, baseUrl, transportVersion, securityVersion;
@@ -75,9 +82,53 @@ public class ProvisionActivity extends AppCompatActivity {
         transportVersion = intent.getStringExtra(Provision.CONFIG_TRANSPORT_KEY);
         securityVersion = intent.getStringExtra(Provision.CONFIG_SECURITY_KEY);
 
-        ssid = findViewById(R.id.ssid_text);
+
+        String[] items = new String[]{"CmdGetPIDValue", "CmdSetInit", "CmdGetAlgoirthmInfo"};
+        uuidList = findViewById(R.id.uuid_list);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, items);
+        //ArrayAdapter<String> myAdapter = new ArrayAdapter<String>(ProvisionActivity.this,android.R.layout.simple_list_item_1,getResources().getStringArray(R.array.uuids));
+        //mAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        uuidList.setAdapter(adapter);
+        uuidList.setOnItemSelectedListener(new OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                switch (i) {
+                    case 0:
+                        uuid_id=0;
+                        ssidInput.setVisibility(view.VISIBLE);
+                        ssidInput.setHint(R.string.mode);
+                        passwordInput.setVisibility(view.VISIBLE);
+                        passwordInput.setHint(R.string.pid);
+                        Log.e(TAG, "onItemSelected: pina" );
+                        break;
+                    case 1:
+                        ssidInput.setVisibility(view.VISIBLE);
+                        ssidInput.setHint(R.string.init_speed);
+                        passwordInput.setVisibility(view.VISIBLE);
+                        passwordInput.setHint(R.string.init_size);
+                        uuid_id=1;
+                        Log.e(TAG, "onItemSelected: punci" );
+                        break;
+                    case 2:
+                        ssidInput.setVisibility(view.GONE);
+                        passwordInput.setVisibility(view.GONE);
+                        uuid_id=2;
+                        Log.e(TAG, "onItemSelected: cunci" );
+                        break;
+
+                }
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
+
         ssidInput = findViewById(R.id.ssid_input);
-        passwordInput = findViewById(R.id.password_input);
+        passwordInput = findViewById(R.id.second_input);
         btnProvision = findViewById(R.id.btn_provision);
         progressBar = findViewById(R.id.progress_indicator);
 
@@ -87,14 +138,14 @@ public class ProvisionActivity extends AppCompatActivity {
 
         if (TextUtils.isEmpty(wifiSSID)) {
 
-            ssid.setVisibility(View.GONE);
+            //ssid.setVisibility(View.GONE);
             ssidInput.setVisibility(View.VISIBLE);
 
         } else {
 
             ssidInput.setVisibility(View.GONE);
-            ssid.setVisibility(View.VISIBLE);
-            ssid.setText(wifiSSID);
+           // ssid.setVisibility(View.VISIBLE);
+           // ssid.setText(wifiSSID);
 
             if (wifiSecurityType == AppConstants.WIFI_OPEN) {
 
@@ -112,6 +163,8 @@ public class ProvisionActivity extends AppCompatActivity {
         btnProvision.setTextColor(Color.WHITE);
 
         ssidInput.addTextChangedListener(new TextWatcher() {
+
+
 
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -155,6 +208,8 @@ public class ProvisionActivity extends AppCompatActivity {
             }
         });
     }
+
+
 
     @Override
     public void onBackPressed() {
@@ -222,7 +277,7 @@ public class ProvisionActivity extends AppCompatActivity {
                                     .show();
                         }
                     });
-
+                    Log.e(TAG, "finalSession");
                     applyConfig(finalSession);
                 }
 
@@ -249,6 +304,7 @@ public class ProvisionActivity extends AppCompatActivity {
             };
             session.init(null);
         } else {
+            Log.e(TAG, " ELSE applyConfig(session)");
             applyConfig(session);
         }
     }
@@ -261,9 +317,11 @@ public class ProvisionActivity extends AppCompatActivity {
         provision.provisioningListener = new Provision.ProvisioningListener() {
             @Override
             public void OnApplyConfigurationsSucceeded() {
+                Log.e(TAG,"Configurations successfully applied");
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+
                         Toast.makeText(ProvisionActivity.this,
                                 "Configurations successfully applied",
                                 Toast.LENGTH_LONG)
@@ -271,7 +329,7 @@ public class ProvisionActivity extends AppCompatActivity {
 
                     }
                 });
-                goToSuccessPage("PINA");
+
             }
 
             @Override
@@ -344,8 +402,10 @@ public class ProvisionActivity extends AppCompatActivity {
 
             @Override
             public void onComplete(Constants.Status status, Exception e) {
-                Log.e(TAG,"configureWifi::onComplete");
-               provision.applyConfigurations(null);
+                Log.e(TAG,"configureWifi::onComplete347");
+                goToSuccessPage("");
+               // toggleFormState(false);
+              // provision.applyConfigurations(null);
             }
         });
     }
@@ -364,13 +424,18 @@ public class ProvisionActivity extends AppCompatActivity {
 
     private void toggleFormState(boolean isEnabled) {
 
-        if (isEnabled) {
-
-            progressBar.setVisibility(View.GONE);
+       /* if (isEnabled) {
+            Log.e(TAG,"goToSuccessPage 1");
+            //progressBar.setVisibility(View.GONE);
+            Log.e(TAG,"goToSuccessPage 1");
             btnProvision.setEnabled(true);
+            Log.e(TAG,"goToSuccessPage 1");
             btnProvision.setAlpha(1f);
+            Log.e(TAG,"goToSuccessPage 1");
             ssidInput.setEnabled(true);
+            Log.e(TAG,"goToSuccessPage 1");
             passwordInput.setEnabled(true);
+            Log.e(TAG,"goToSuccessPage 1");
 
         } else {
 
@@ -380,16 +445,22 @@ public class ProvisionActivity extends AppCompatActivity {
             btnProvision.setTextColor(Color.WHITE);
             ssidInput.setEnabled(false);
             passwordInput.setEnabled(false);
-        }
+        }*/
     }
 
     private void goToSuccessPage(String statusText) {
-
+        Log.e(TAG,"goToSuccessPage 1");
         toggleFormState(true);
+        Log.e(TAG,"goToSuccessPage 2");
         finish();
+        Log.e(TAG,"goToSuccessPage 3");
         Intent goToSuccessPage = new Intent(getApplicationContext(), ProvisionSuccessActivity.class);
+        Log.e(TAG,"goToSuccessPage 4");
         goToSuccessPage.putExtra(AppConstants.KEY_STATUS_MSG, statusText);
+        Log.e(TAG,"goToSuccessPage 5");
         goToSuccessPage.putExtras(getIntent());
+        Log.e(TAG,"goToSuccessPage 6");
         startActivity(goToSuccessPage);
+        Log.e(TAG,"goToSuccessPage 7");
     }
 }
