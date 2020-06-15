@@ -1,0 +1,65 @@
+syntax = "proto3";
+package espressif;
+
+import "constants.proto";
+
+enum OBDInitSpeed {
+	speed250kbs = 0;
+	speed500kbs = 1;
+}
+
+enum OBDInitBitsize {
+	bitsize11 = 0;
+	bitsize29 = 1;
+}
+
+message CmdGetPIDValue {
+	int32 mode = 1;
+	int32 PID = 2;
+}
+
+message RespGetPIDValue {
+    Status status = 1;
+	int32 value = 2;
+}
+
+message CmdSetInit {
+	OBDInitSpeed speed = 1;
+	OBDInitBitsize bitsize = 2;
+}
+
+message RespSetInit {
+    Status status = 1;
+}
+
+message CmdGetAlgoirthmInfo {
+
+}
+
+message RespGetAlgoirthmInfo {
+    Status status = 1;
+	float efficiency = 2;
+	float safety = 3;
+	float driving_mark = 4;
+}
+
+enum OBDMsgType {
+    TypeCmdGetPIDValue = 0;
+    TypeRespGetPIDValue = 1;
+    TypeCmdSetInit = 2;
+    TypeRespSetInit = 3;
+    TypeCmdGetAlgoirthmInfo = 4;
+    TypeRespGetAlgoirthmInfo = 5;
+}
+
+message OBDPayload {
+    OBDMsgType msg = 1;
+    oneof payload {
+        CmdGetPIDValue cmd_get_pid_value = 10;
+        RespGetPIDValue resp_get_pid_value = 11;
+        CmdSetInit cmd_set_init = 12;
+        RespSetInit resp_set_init = 13;
+        CmdGetAlgoirthmInfo cmd_get_algirithm_info = 14;
+        RespGetAlgoirthmInfo resp_get_algirithm_info = 15;
+    }
+}

@@ -33,6 +33,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -48,6 +50,7 @@ import com.espressif.provision.transport.SoftAPTransport;
 import com.espressif.provision.transport.Transport;
 
 import espressif.Constants;
+import espressif.Obd;
 import espressif.WifiConstants;
 
 public class ProvisionActivity extends AppCompatActivity  {
@@ -59,6 +62,11 @@ public class ProvisionActivity extends AppCompatActivity  {
     private EditText passwordInput;
     private Button btnProvision;
     private ProgressBar progressBar;
+    private RadioButton radio1;
+    private RadioButton radio2;
+    private RadioButton radio3;
+    private RadioButton radio4;
+    private RadioGroup radioGroup;
 
     private byte uuid_id;
     private int wifiSecurityType;
@@ -82,6 +90,17 @@ public class ProvisionActivity extends AppCompatActivity  {
         transportVersion = intent.getStringExtra(Provision.CONFIG_TRANSPORT_KEY);
         securityVersion = intent.getStringExtra(Provision.CONFIG_SECURITY_KEY);
 
+        radio1 = findViewById(R.id.radioButton);
+        radio1.setVisibility(View.GONE);
+        radio2 = findViewById(R.id.radioButton2);
+        radio2.setVisibility(View.GONE);
+        radio3 = findViewById(R.id.radioButton3);
+        radio3.setVisibility(View.GONE);
+        radio4 = findViewById(R.id.radioButton4);
+        radio4.setVisibility(View.GONE);
+        //radio1.setText("Test");
+
+        //radioGroup.findViewById(R.id.radigroup);
 
         String[] items = new String[]{"CmdGetPIDValue", "CmdSetInit", "CmdGetAlgoirthmInfo"};
         uuidList = findViewById(R.id.uuid_list);
@@ -95,25 +114,38 @@ public class ProvisionActivity extends AppCompatActivity  {
                 switch (i) {
                     case 0:
                         uuid_id=0;
+                        radio1.setVisibility(view.GONE);
+                        radio2.setVisibility(view.GONE);
+                        radio3.setVisibility(view.GONE);
+                        radio4.setVisibility(view.GONE);
                         ssidInput.setVisibility(view.VISIBLE);
                         ssidInput.setHint(R.string.mode);
                         passwordInput.setVisibility(view.VISIBLE);
                         passwordInput.setHint(R.string.pid);
-                        Log.e(TAG, "onItemSelected: pina" );
+                        Log.e(TAG, "onItemSelected: CmdGetPIDValue" );
                         break;
                     case 1:
-                        ssidInput.setVisibility(view.VISIBLE);
+                        ssidInput.setVisibility(view.GONE);
+                        passwordInput.setVisibility(view.GONE);
+                        radio1.setVisibility(view.VISIBLE);
+                        radio2.setVisibility(view.VISIBLE);
+                        radio3.setVisibility(view.VISIBLE);
+                        radio4.setVisibility(view.VISIBLE);
                         ssidInput.setHint(R.string.init_speed);
-                        passwordInput.setVisibility(view.VISIBLE);
+                        passwordInput.setVisibility(view.GONE);
                         passwordInput.setHint(R.string.init_size);
                         uuid_id=1;
-                        Log.e(TAG, "onItemSelected: punci" );
+                        Log.e(TAG, "onItemSelected: CmdSetInit" );
                         break;
                     case 2:
                         ssidInput.setVisibility(view.GONE);
                         passwordInput.setVisibility(view.GONE);
+                        radio1.setVisibility(view.GONE);
+                        radio2.setVisibility(view.GONE);
+                        radio3.setVisibility(view.GONE);
+                        radio4.setVisibility(view.GONE);
                         uuid_id=2;
-                        Log.e(TAG, "onItemSelected: cunci" );
+                        Log.e(TAG, "onItemSelected: CmdGetAlgoirthmInfo" );
                         break;
 
                 }
@@ -158,8 +190,8 @@ public class ProvisionActivity extends AppCompatActivity  {
             }
         }
 
-        btnProvision.setEnabled(false);
-        btnProvision.setAlpha(0.5f);
+        btnProvision.setEnabled(true);
+        //btnProvision.setAlpha(0.5f);
         btnProvision.setTextColor(Color.WHITE);
 
         ssidInput.addTextChangedListener(new TextWatcher() {
@@ -398,28 +430,76 @@ public class ProvisionActivity extends AppCompatActivity  {
             }
         };
 
-        provision.configureWifi(ssidValue, passphraseValue, new Provision.ProvisionActionListener() {
+        switch (uuid_id) {
+            case 0:
+                provision.cmdGetPIDValue(ssidValue, passphraseValue, new Provision.ProvisionActionListener() {
+
+                    @Override
+                    public void onComplete(Constants.Status status, Exception e) {
+                        Log.e(TAG, "configureWifi::onComplete347");
+                        goToSuccessPage("");
+                        // toggleFormState(false);
+                        // provision.applyConfigurations(null);
+                    }
+                });
+                break;
+
+            case 1:
+                Obd.OBDInitSpeed speed;
+                Obd.OBDInitBitsize bitsize;
+                if( radio1.isChecked()) {
+                    speed = Obd.OBDInitSpeed.speed250kbs;
+                }else{
+                   speed= Obd.OBDInitSpeed.speed500kbs;
+                }
+
+
+                if( radio3.isChecked()) {
+                    bitsize = Obd.OBDInitBitsize.bitsize11;
+                }else{
+                    bitsize = Obd.OBDInitBitsize.bitsize29;
+                }
+
+
+
+
+        provision.cmdSetInit(speed,bitsize, new Provision.ProvisionActionListener() {
 
             @Override
             public void onComplete(Constants.Status status, Exception e) {
-                Log.e(TAG,"configureWifi::onComplete347");
+                Log.e(TAG, "configureWifi::onComplete347");
                 goToSuccessPage("");
-               // toggleFormState(false);
-              // provision.applyConfigurations(null);
+                // toggleFormState(false);
+                // provision.applyConfigurations(null);
             }
         });
+        break;
+            case 2:
+                provision.cmdGetAlgoirthmInfo( new Provision.ProvisionActionListener() {
+
+                    @Override
+                    public void onComplete(Constants.Status status, Exception e) {
+                        Log.e(TAG, "configureWifi::onComplete347");
+                        goToSuccessPage("");
+                        // toggleFormState(false);
+                        // provision.applyConfigurations(null);
+                    }
+                });
+                break;
+    }
     }
 
     private void enableProvisionBtn() {
-
-        if (!TextUtils.isEmpty(ssidValue)/* && !TextUtils.isEmpty(passphraseValue) */) {
+        btnProvision.setEnabled(true);
+        btnProvision.setAlpha(1f);
+        /*if (!TextUtils.isEmpty(ssidValue)) {
             btnProvision.setEnabled(true);
             btnProvision.setAlpha(1f);
         } else {
             btnProvision.setEnabled(false);
             btnProvision.setAlpha(0.5f);
             btnProvision.setTextColor(Color.WHITE);
-        }
+        }*/
     }
 
     private void toggleFormState(boolean isEnabled) {

@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="horizontal"
     android:visibility="visible"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="com.espressif.ui.activities.ProvisionActivity"
@@ -22,6 +23,7 @@
             android:id="@+id/uuid_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
+
     </RelativeLayout>
 
     <android.support.design.widget.TextInputLayout
@@ -33,6 +35,27 @@
         android:layout_marginTop="50dp"
         android:layout_marginEnd="20dp"
         android:layout_marginBottom="0dp">
+
+        <RadioGroup
+            android:id="@+id/radigroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/radioButton"
+                android:layout_width="174dp"
+                android:layout_height="match_parent"
+                android:checked="true"
+                android:text="250 KBits" />
+
+            <RadioButton
+                android:id="@+id/radioButton2"
+                android:layout_width="199dp"
+                android:layout_height="wrap_content"
+                android:checked="false"
+                android:text="500 KBits" />
+        </RadioGroup>
 
         <EditText
             android:id="@+id/ssid_input"
@@ -61,6 +84,25 @@
             android:layout_height="wrap_content"
             android:autofillHints=""
             android:inputType="number" />
+
+        <RadioGroup
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/radioButton3"
+                android:layout_width="172dp"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="11 bit" />
+
+            <RadioButton
+                android:id="@+id/radioButton4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="29 bit" />
+        </RadioGroup>
 
     </android.support.design.widget.TextInputLayout>
 

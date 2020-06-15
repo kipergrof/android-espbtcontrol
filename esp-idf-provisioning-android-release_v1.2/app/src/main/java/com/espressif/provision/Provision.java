@@ -34,6 +34,7 @@ import java.util.Map;
 
 import espressif.Constants;
 import espressif.CustomConfig;
+import espressif.Obd;
 import espressif.WifiConfig;
 import espressif.WifiConstants;
 
@@ -55,7 +56,7 @@ public class Provision {
     public static final String CONFIG_SECURITY_SECURITY1 = "security1";
     public static final String CONFIG_SECURITY_SECURITY0 = "security0";
     public static final String CONFIG_WIFI_AP_KEY = "wifiAPPrefix";
-    public static final String PROVISIONING_CONFIG_PATH = "custom-config";
+    public static final String PROVISIONING_CONFIG_PATH = "obd-config";
     public static final String PROVISIONING_WIFI_SSID = "SSID";
     private static final String TAG = "Espressif::" + Provision.class.getSimpleName();
     public ProvisioningListener provisioningListener;
@@ -122,17 +123,17 @@ public class Provision {
      * @param passphrase     passphrase
      * @param actionListener listener to be called when config data is sent
      */
-    public void configureWifi(final String ssid,
-                              final String passphrase,
+    public void cmdGetPIDValue(final String MODE,
+                              final String PID,
                               final ProvisionActionListener actionListener) {
         if (session.isEstablished()) {
-            byte[] message = createSetWifiConfigRequest(ssid, passphrase);
+            byte[] message = createcmdGetPIDValue(MODE, PID);
             transport.sendConfigData(PROVISIONING_CONFIG_PATH, message, new ResponseListener() {
                 @Override
                 public void onSuccess(byte[] returnData) {
                     Log.e(TAG, "onSuccess 130");
-                    CustomConfig.CustomConfigStatus status = processSetWifiConfigResponse(returnData);
-                    if (status != CustomConfig.CustomConfigStatus.ConfigSuccess && provisioningListener != null) {
+                    Constants.Status status = processcmdGetPIDValueResponse(returnData);
+                    if (status != Constants.Status.Success && provisioningListener != null) {
                         provisioningListener.OnProvisioningFailed(new RuntimeException("Could not sent wifi credentials to device"));
                     }
                     if (actionListener != null) {
@@ -153,6 +154,186 @@ public class Provision {
         }
     }
 
+    private byte[] createcmdGetPIDValue(String MODE, String PID) {
+        //
+
+        Obd.CmdGetPIDValue cmdGetPIDValue;
+
+        cmdGetPIDValue = Obd.CmdGetPIDValue
+                .newBuilder()
+                .setPID(Integer.parseInt(PID))
+                .setMode(Integer.parseInt(MODE))
+                .build();
+
+        Obd.OBDPayload obdPayload = Obd.OBDPayload
+                .newBuilder()
+                .setCmdGetPidValue(cmdGetPIDValue)
+                .setMsg(Obd.OBDMsgType.TypeCmdGetPIDValue)
+                .build();
+        return obdPayload.toByteArray();
+
+        /*
+
+        Obd.CmdSetInit cmdSetInit;
+
+        cmdSetInit = Obd.CmdSetInit
+                .newBuilder()
+                .setBitsize(Obd.OBDInitBitsize.bitsize11)
+                .setSpeed(Obd.OBDInitSpeed.speed250kbs)
+                .build();
+
+        Obd.OBDPayload obdPayload = Obd.OBDPayload
+                .newBuilder()
+                .setCmdSetInit(cmdSetInit)
+                .setMsg(Obd.OBDMsgType.TypeCmdSetInit)
+                .build();
+        return obdPayload.toByteArray();
+        */
+        //custom üzenet
+       /* CustomConfig.CustomConfigRequest CustomConfigRequest;
+        WifiConfig.CmdSetConfig cmdSetConfig;
+
+        CustomConfigRequest = CustomConfig.CustomConfigRequest
+                .newBuilder()
+                .setInfo(ssid)
+                .setVersion(Integer.parseInt(passphrase))
+                .build();
+        Log.d(TAG, "createSetWifiConfigRequest(String ssid, String passphrase)");
+        return CustomConfigRequest.toByteArray();*/
+
+        // eredeti
+        /*f (passphrase != null) {
+
+            cmdSetConfig = WifiConfig.CmdSetConfig
+                    .newBuilder()
+                    .setSsid(ByteString.copyFrom(ssid.getBytes()))
+                    .setPassphrase(ByteString.copyFrom(passphrase.getBytes()))
+                    .build();
+        } else {
+            cmdSetConfig = WifiConfig.CmdSetConfig
+                    .newBuilder()
+                    .setSsid(ByteString.copyFrom(ssid.getBytes()))
+                    .build();
+        }*/
+       /* WifiConfig.WiFiConfigPayload wiFiConfigPayload = WifiConfig.WiFiConfigPayload
+                .newBuilder()
+                .setCmdSetConfig(cmdSetConfig)
+                .setMsg(WifiConfig.WiFiConfigMsgType.TypeCmdSetConfig)
+                .build();*/
+
+    }
+
+    private Constants.Status processcmdGetPIDValueResponse(byte[] responseData) {
+        byte[] decryptedData = this.security.decrypt(responseData);
+        Constants.Status status =  Constants.Status.InvalidSession;
+        try {
+            Obd.OBDPayload obdPayload = Obd.OBDPayload.parseFrom(decryptedData);
+            //CustomConfig.CustomConfigResponse customConfigResponse = CustomConfig.CustomConfigResponse.parseFrom(decryptedData);
+            //WifiConfig.WiFiConfigPayload wiFiConfigPayload = WifiConfig.WiFiConfigPayload.parseFrom(decryptedData);
+            status = obdPayload.getRespGetPidValue().getStatus();
+
+            Log.e(TAG,String.valueOf(status));
+            Log.e(TAG,String.valueOf(obdPayload.getRespGetPidValue().getValue()));
+            //status = wiFiConfigPayload.getRespSetConfig().getStatus();
+        } catch (InvalidProtocolBufferException e) {
+            e.printStackTrace();
+        }
+        return status;
+    }
+
+    public void cmdSetInit(Obd.OBDInitSpeed speed,Obd.OBDInitBitsize bitsize,final ProvisionActionListener actionListener) {
+        if (session.isEstablished()) {
+            byte[] message = createcmdSetInit(speed,bitsize);
+            transport.sendConfigData(PROVISIONING_CONFIG_PATH, message, new ResponseListener() {
+                @Override
+                public void onSuccess(byte[] returnData) {
+                    Log.e(TAG, "onSuccess 130");
+                    CustomConfig.CustomConfigStatus status = processSetWifiConfigResponse(returnData);
+                    if (status != CustomConfig.CustomConfigStatus.ConfigSuccess && provisioningListener != null) {
+                        provisioningListener.OnProvisioningFailed(new RuntimeException("Could not sent wifi credentials to device"));
+                    }
+                    if (actionListener != null) {
+                        actionListener.onComplete(Constants.Status.Success, null);
+                    }
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    if (provisioningListener != null) {
+                        provisioningListener.OnProvisioningFailed(e);
+                    }
+                    if (actionListener != null) {
+                        actionListener.onComplete(Constants.Status.InternalError, e);
+                    }
+                }
+            });
+        }
+    }
+
+    private byte[] createcmdSetInit(Obd.OBDInitSpeed speed,Obd.OBDInitBitsize bitsize) {
+
+        Obd.CmdSetInit cmdSetInit;
+
+        cmdSetInit = Obd.CmdSetInit
+                .newBuilder()
+                .setBitsize(bitsize)
+                .setSpeed(speed)
+                .build();
+
+        Obd.OBDPayload obdPayload = Obd.OBDPayload
+                .newBuilder()
+                .setCmdSetInit(cmdSetInit)
+                .setMsg(Obd.OBDMsgType.TypeCmdSetInit)
+                .build();
+        return obdPayload.toByteArray();
+
+    }
+
+    public void cmdGetAlgoirthmInfo(final ProvisionActionListener actionListener) {
+        if (session.isEstablished()) {
+            byte[] message = createcmdGetAlgoirthmInfo();
+            transport.sendConfigData(PROVISIONING_CONFIG_PATH, message, new ResponseListener() {
+                @Override
+                public void onSuccess(byte[] returnData) {
+                    Log.e(TAG, "onSuccess 130");
+                    CustomConfig.CustomConfigStatus status = processSetWifiConfigResponse(returnData);
+                    if (status != CustomConfig.CustomConfigStatus.ConfigSuccess && provisioningListener != null) {
+                        provisioningListener.OnProvisioningFailed(new RuntimeException("Could not sent wifi credentials to device"));
+                    }
+                    if (actionListener != null) {
+                        actionListener.onComplete(Constants.Status.Success, null);
+                    }
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    if (provisioningListener != null) {
+                        provisioningListener.OnProvisioningFailed(e);
+                    }
+                    if (actionListener != null) {
+                        actionListener.onComplete(Constants.Status.InternalError, e);
+                    }
+                }
+            });
+        }
+    }
+
+    private byte[] createcmdGetAlgoirthmInfo() {
+
+        Obd.CmdGetAlgoirthmInfo cmdGetAlgoirthmInfo;
+
+        cmdGetAlgoirthmInfo =Obd.CmdGetAlgoirthmInfo
+                .newBuilder()
+                .build();
+        Obd.OBDPayload obdPayload = Obd.OBDPayload
+                .newBuilder()
+                .setCmdGetAlgirithmInfo(cmdGetAlgoirthmInfo)
+                .setMsg(Obd.OBDMsgType.TypeCmdGetAlgoirthmInfo)
+                .build();
+        return obdPayload.toByteArray();
+
+
+    }
     /**
      * Apply all current configurations on the device.
      * A typical flow will be
@@ -208,36 +389,9 @@ public class Provision {
         }
     }
 
-    private byte[] createSetWifiConfigRequest(String ssid, String passphrase) {
-        CustomConfig.CustomConfigRequest CustomConfigRequest;
-        WifiConfig.CmdSetConfig cmdSetConfig;
 
-        CustomConfigRequest = CustomConfig.CustomConfigRequest
-                .newBuilder()
-                .setInfo(ssid)
-                .setVersion(Integer.parseInt(passphrase))
-                .build();
-        Log.d(TAG, "createSetWifiConfigRequest(String ssid, String passphrase)");
-        /*f (passphrase != null) {
 
-            cmdSetConfig = WifiConfig.CmdSetConfig
-                    .newBuilder()
-                    .setSsid(ByteString.copyFrom(ssid.getBytes()))
-                    .setPassphrase(ByteString.copyFrom(passphrase.getBytes()))
-                    .build();
-        } else {
-            cmdSetConfig = WifiConfig.CmdSetConfig
-                    .newBuilder()
-                    .setSsid(ByteString.copyFrom(ssid.getBytes()))
-                    .build();
-        }*/
-       /* WifiConfig.WiFiConfigPayload wiFiConfigPayload = WifiConfig.WiFiConfigPayload
-                .newBuilder()
-                .setCmdSetConfig(cmdSetConfig)
-                .setMsg(WifiConfig.WiFiConfigMsgType.TypeCmdSetConfig)
-                .build();*/
-        return CustomConfigRequest.toByteArray();
-    }
+
 
     private byte[] getWifiConfigStatusRequest() {
         WifiConfig.CmdGetStatus cmdGetStatus = WifiConfig.CmdGetStatus
@@ -250,6 +404,8 @@ public class Provision {
                 .build();
         return this.security.encrypt(wiFiConfigPayload.toByteArray());
     }
+
+
 
     private CustomConfig.CustomConfigStatus processSetWifiConfigResponse(byte[] responseData) {
         byte[] decryptedData = this.security.decrypt(responseData);
