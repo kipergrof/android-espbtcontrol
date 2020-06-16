@@ -18,6 +18,7 @@ import android.os.Bundle;
 import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.widget.Button;
@@ -25,6 +26,7 @@ import android.widget.TextView;
 
 import com.espressif.AppConstants;
 import com.espressif.EspApplication;
+import com.espressif.provision.Provision;
 import com.espressif.provision.R;
 
 public class ProvisionSuccessActivity extends AppCompatActivity {
@@ -36,10 +38,13 @@ public class ProvisionSuccessActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.title_activity_provision);
         setSupportActionBar(toolbar);
+        TextView textView = findViewById(R.id.textView);
 
-        String status = getIntent().getStringExtra(AppConstants.KEY_STATUS_MSG);
-        TextView successTextView = findViewById(R.id.success_textview);
-        successTextView.setText(status);
+        String info = getIntent().getStringExtra(AppConstants.KEY_STATUS_MSG);
+        getIntent().removeExtra(AppConstants.KEY_STATUS_MSG);
+        Log.e("Succes", "onCreate: "+ info );
+        //TextView successTextView = findViewById(R.id.success_textview);
+        textView.setText(info);
         ((EspApplication) getApplicationContext()).disableOnlyWifiNetwork();
 
         Button doneButton = findViewById(R.id.done_button);
@@ -54,6 +59,24 @@ public class ProvisionSuccessActivity extends AppCompatActivity {
                 Intent intent = new Intent(getApplicationContext(), EspMainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
+            }
+        });
+        Button againButton = findViewById(R.id.done_button2);
+        againButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                //Vibrator vib = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+                //vib.vibrate(HapticFeedbackConstants.VIRTUAL_KEY);
+               // finish();
+                //BLEProvisionLanding.isBleWorkDone = true;
+                //Intent intent = new Intent(getApplicationContext(), ProvisionActivity.class);
+               // intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+               // startActivity(intent);
+                Intent launchProvisionInstructions = new Intent(getApplicationContext(), ProvisionActivity.class);
+                launchProvisionInstructions.putExtras(getIntent());
+                launchProvisionInstructions.putExtra(AppConstants.KEY_PROOF_OF_POSSESSION, "");
+                startActivityForResult(launchProvisionInstructions, Provision.REQUEST_PROVISIONING_CODE);
             }
         });
     }

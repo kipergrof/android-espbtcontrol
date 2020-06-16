@@ -64,6 +64,10 @@ public class Provision {
     private Transport transport;
     private Session session;
 
+    private  Obd.RespGetPIDValue respGetPIDValue;
+    private  Obd.RespSetInit respSetInit;
+    private  Obd.RespGetAlgoirthmInfo respGetAlgoirthmInfo;
+
     /**
      * Initialize Provision class with a Session object.
      * Session object should already have been
@@ -71,6 +75,31 @@ public class Provision {
      *
      * @param session
      */
+
+    public  Obd.RespGetPIDValue getRespGetPIDValue(){
+        return respGetPIDValue;
+    }
+
+    public void setrespGetPIDValue(Obd.RespGetPIDValue respGetPIDValue) {
+        this.respGetPIDValue = respGetPIDValue;
+    }
+
+    public Obd.RespGetAlgoirthmInfo getRespGetAlgoirthmInfo() {
+        return respGetAlgoirthmInfo;
+    }
+
+    public void setRespGetAlgoirthmInfo(Obd.RespGetAlgoirthmInfo respGetAlgoirthmInfo) {
+        this.respGetAlgoirthmInfo = respGetAlgoirthmInfo;
+    }
+
+    public Obd.RespSetInit getRespSetInit() {
+        return respSetInit;
+    }
+
+    public void setRespSetInit(Obd.RespSetInit respSetInit) {
+        this.respSetInit = respSetInit;
+    }
+
     public Provision(Session session) {
         this.session = session;
         this.security = session.getSecurity();
@@ -126,18 +155,22 @@ public class Provision {
     public void cmdGetPIDValue(final String MODE,
                               final String PID,
                               final ProvisionActionListener actionListener) {
+
         if (session.isEstablished()) {
             byte[] message = createcmdGetPIDValue(MODE, PID);
             transport.sendConfigData(PROVISIONING_CONFIG_PATH, message, new ResponseListener() {
                 @Override
                 public void onSuccess(byte[] returnData) {
                     Log.e(TAG, "onSuccess 130");
-                    Constants.Status status = processcmdGetPIDValueResponse(returnData);
-                    if (status != Constants.Status.Success && provisioningListener != null) {
+                    Obd.RespGetPIDValue respGetPIDValue = processcmdGetPIDValueResponse(returnData);
+                    if (respGetPIDValue.getStatus() != Constants.Status.Success && provisioningListener != null) {
                         provisioningListener.OnProvisioningFailed(new RuntimeException("Could not sent wifi credentials to device"));
                     }
                     if (actionListener != null) {
-                       actionListener.onComplete(Constants.Status.Success, null);
+                        setrespGetPIDValue(respGetPIDValue);
+                       actionListener.onComplete(respGetPIDValue.getStatus(), null);
+
+
                     }
                 }
 
@@ -152,6 +185,7 @@ public class Provision {
                 }
             });
         }
+
     }
 
     private byte[] createcmdGetPIDValue(String MODE, String PID) {
@@ -172,73 +206,27 @@ public class Provision {
                 .build();
         return obdPayload.toByteArray();
 
-        /*
 
-        Obd.CmdSetInit cmdSetInit;
-
-        cmdSetInit = Obd.CmdSetInit
-                .newBuilder()
-                .setBitsize(Obd.OBDInitBitsize.bitsize11)
-                .setSpeed(Obd.OBDInitSpeed.speed250kbs)
-                .build();
-
-        Obd.OBDPayload obdPayload = Obd.OBDPayload
-                .newBuilder()
-                .setCmdSetInit(cmdSetInit)
-                .setMsg(Obd.OBDMsgType.TypeCmdSetInit)
-                .build();
-        return obdPayload.toByteArray();
-        */
-        //custom üzenet
-       /* CustomConfig.CustomConfigRequest CustomConfigRequest;
-        WifiConfig.CmdSetConfig cmdSetConfig;
-
-        CustomConfigRequest = CustomConfig.CustomConfigRequest
-                .newBuilder()
-                .setInfo(ssid)
-                .setVersion(Integer.parseInt(passphrase))
-                .build();
-        Log.d(TAG, "createSetWifiConfigRequest(String ssid, String passphrase)");
-        return CustomConfigRequest.toByteArray();*/
-
-        // eredeti
-        /*f (passphrase != null) {
-
-            cmdSetConfig = WifiConfig.CmdSetConfig
-                    .newBuilder()
-                    .setSsid(ByteString.copyFrom(ssid.getBytes()))
-                    .setPassphrase(ByteString.copyFrom(passphrase.getBytes()))
-                    .build();
-        } else {
-            cmdSetConfig = WifiConfig.CmdSetConfig
-                    .newBuilder()
-                    .setSsid(ByteString.copyFrom(ssid.getBytes()))
-                    .build();
-        }*/
-       /* WifiConfig.WiFiConfigPayload wiFiConfigPayload = WifiConfig.WiFiConfigPayload
-                .newBuilder()
-                .setCmdSetConfig(cmdSetConfig)
-                .setMsg(WifiConfig.WiFiConfigMsgType.TypeCmdSetConfig)
-                .build();*/
 
     }
 
-    private Constants.Status processcmdGetPIDValueResponse(byte[] responseData) {
+    private  Obd.RespGetPIDValue processcmdGetPIDValueResponse(byte[] responseData) {
         byte[] decryptedData = this.security.decrypt(responseData);
-        Constants.Status status =  Constants.Status.InvalidSession;
+        Obd.RespGetPIDValue respGetPIDValue = null;
+        //Constants.Status status =  Constants.Status.InvalidSession;
         try {
             Obd.OBDPayload obdPayload = Obd.OBDPayload.parseFrom(decryptedData);
             //CustomConfig.CustomConfigResponse customConfigResponse = CustomConfig.CustomConfigResponse.parseFrom(decryptedData);
             //WifiConfig.WiFiConfigPayload wiFiConfigPayload = WifiConfig.WiFiConfigPayload.parseFrom(decryptedData);
-            status = obdPayload.getRespGetPidValue().getStatus();
+            respGetPIDValue = obdPayload.getRespGetPidValue();
 
-            Log.e(TAG,String.valueOf(status));
-            Log.e(TAG,String.valueOf(obdPayload.getRespGetPidValue().getValue()));
+            //Log.e(TAG,String.valueOf(status));
+            //Log.e(TAG,String.valueOf(obdPayload.getRespGetPidValue().getValue()));
             //status = wiFiConfigPayload.getRespSetConfig().getStatus();
         } catch (InvalidProtocolBufferException e) {
             e.printStackTrace();
         }
-        return status;
+        return respGetPIDValue;
     }
 
     public void cmdSetInit(Obd.OBDInitSpeed speed,Obd.OBDInitBitsize bitsize,final ProvisionActionListener actionListener) {
@@ -248,12 +236,15 @@ public class Provision {
                 @Override
                 public void onSuccess(byte[] returnData) {
                     Log.e(TAG, "onSuccess 130");
-                    CustomConfig.CustomConfigStatus status = processSetWifiConfigResponse(returnData);
-                    if (status != CustomConfig.CustomConfigStatus.ConfigSuccess && provisioningListener != null) {
+                    Obd.RespSetInit respSetInit = processcmdSetInit(returnData);
+                    Log.e(TAG, "onSuccess: "+ respSetInit.getStatus() );
+                    //setRespSetInit(respSetInit);
+                    if (respSetInit.getStatus() != Constants.Status.Success && provisioningListener != null) {
                         provisioningListener.OnProvisioningFailed(new RuntimeException("Could not sent wifi credentials to device"));
                     }
                     if (actionListener != null) {
-                        actionListener.onComplete(Constants.Status.Success, null);
+                        setRespSetInit(respSetInit);
+                        actionListener.onComplete(respSetInit.getStatus(), null);
                     }
                 }
 
@@ -289,6 +280,24 @@ public class Provision {
 
     }
 
+    private Obd.RespSetInit processcmdSetInit(byte[] responseData) {
+        byte[] decryptedData = this.security.decrypt(responseData);
+        Obd.RespSetInit respSetInit =  null;
+        try {
+            Obd.OBDPayload obdPayload = Obd.OBDPayload.parseFrom(decryptedData);
+            //CustomConfig.CustomConfigResponse customConfigResponse = CustomConfig.CustomConfigResponse.parseFrom(decryptedData);
+            //WifiConfig.WiFiConfigPayload wiFiConfigPayload = WifiConfig.WiFiConfigPayload.parseFrom(decryptedData);
+            respSetInit = obdPayload.getRespSetInit();
+
+            //Log.e(TAG,String.valueOf(status));
+            //Log.e(TAG,String.valueOf(obdPayload.getRespGetPidValue().getValue()));
+            //status = wiFiConfigPayload.getRespSetConfig().getStatus();
+        } catch (InvalidProtocolBufferException e) {
+            e.printStackTrace();
+        }
+        return respSetInit;
+    }
+
     public void cmdGetAlgoirthmInfo(final ProvisionActionListener actionListener) {
         if (session.isEstablished()) {
             byte[] message = createcmdGetAlgoirthmInfo();
@@ -296,12 +305,15 @@ public class Provision {
                 @Override
                 public void onSuccess(byte[] returnData) {
                     Log.e(TAG, "onSuccess 130");
-                    CustomConfig.CustomConfigStatus status = processSetWifiConfigResponse(returnData);
-                    if (status != CustomConfig.CustomConfigStatus.ConfigSuccess && provisioningListener != null) {
+                    Obd.RespGetAlgoirthmInfo respGetAlgoirthmInfo = processcmdGetAlgoirthmInfo(returnData);
+                    //Constants.Status status = processcmdGetAlgoirthmInfo(returnData);
+
+                    if (respGetAlgoirthmInfo.getStatus() != Constants.Status.Success && provisioningListener != null) {
                         provisioningListener.OnProvisioningFailed(new RuntimeException("Could not sent wifi credentials to device"));
                     }
                     if (actionListener != null) {
-                        actionListener.onComplete(Constants.Status.Success, null);
+                        setRespGetAlgoirthmInfo(respGetAlgoirthmInfo);
+                        actionListener.onComplete(respGetAlgoirthmInfo.getStatus(), null);
                     }
                 }
 
@@ -333,6 +345,24 @@ public class Provision {
         return obdPayload.toByteArray();
 
 
+    }
+
+    private Obd.RespGetAlgoirthmInfo processcmdGetAlgoirthmInfo(byte[] responseData) {
+        byte[] decryptedData = this.security.decrypt(responseData);
+        Obd.RespGetAlgoirthmInfo  respGetAlgoirthmInfo =  null;
+        try {
+            Obd.OBDPayload obdPayload = Obd.OBDPayload.parseFrom(decryptedData);
+            //CustomConfig.CustomConfigResponse customConfigResponse = CustomConfig.CustomConfigResponse.parseFrom(decryptedData);
+            //WifiConfig.WiFiConfigPayload wiFiConfigPayload = WifiConfig.WiFiConfigPayload.parseFrom(decryptedData);
+            respGetAlgoirthmInfo = obdPayload.getRespGetAlgirithmInfo();
+
+            //Log.e(TAG,String.valueOf(respGetAlgoirthmInfo.get));
+            //Log.e(TAG,String.valueOf(obdPayload.getRespGetPidValue().getValue()));
+            //status = wiFiConfigPayload.getRespSetConfig().getStatus();
+        } catch (InvalidProtocolBufferException e) {
+            e.printStackTrace();
+        }
+        return respGetAlgoirthmInfo;
     }
     /**
      * Apply all current configurations on the device.
@@ -497,6 +527,8 @@ public class Provision {
         }
         return status;
     }
+
+
 
     private interface WifiStateListener {
         void onWifiStateUpdated(WifiConstants.WifiStationState stationState,

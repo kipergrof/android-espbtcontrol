@@ -432,14 +432,14 @@ public class ProvisionActivity extends AppCompatActivity  {
 
         switch (uuid_id) {
             case 0:
+
                 provision.cmdGetPIDValue(ssidValue, passphraseValue, new Provision.ProvisionActionListener() {
 
                     @Override
                     public void onComplete(Constants.Status status, Exception e) {
-                        Log.e(TAG, "configureWifi::onComplete347");
-                        goToSuccessPage("");
-                        // toggleFormState(false);
-                        // provision.applyConfigurations(null);
+
+                        Log.e(TAG,"pina "+provision.getRespGetPIDValue().toString());
+                        goToSuccessPage("getValue:\t" +  provision.getRespGetPIDValue().getValue() + "\n\n" + "status:\t"+ provision.getRespGetPIDValue().getStatus());
                     }
                 });
                 break;
@@ -467,8 +467,8 @@ public class ProvisionActivity extends AppCompatActivity  {
 
             @Override
             public void onComplete(Constants.Status status, Exception e) {
-                Log.e(TAG, "configureWifi::onComplete347");
-                goToSuccessPage("");
+
+                goToSuccessPage("status: "+ provision.getRespSetInit().getStatus());
                 // toggleFormState(false);
                 // provision.applyConfigurations(null);
             }
@@ -479,8 +479,8 @@ public class ProvisionActivity extends AppCompatActivity  {
 
                     @Override
                     public void onComplete(Constants.Status status, Exception e) {
-                        Log.e(TAG, "configureWifi::onComplete347");
-                        goToSuccessPage("");
+                        //Log.e(TAG, "configureWifi::onComplete347");
+                        goToSuccessPage("Status: " + provision.getRespGetAlgoirthmInfo().getStatus());
                         // toggleFormState(false);
                         // provision.applyConfigurations(null);
                     }
@@ -529,18 +529,18 @@ public class ProvisionActivity extends AppCompatActivity  {
     }
 
     private void goToSuccessPage(String statusText) {
-        Log.e(TAG,"goToSuccessPage 1");
-        toggleFormState(true);
-        Log.e(TAG,"goToSuccessPage 2");
+
+        //toggleFormState(true);
+
         finish();
-        Log.e(TAG,"goToSuccessPage 3");
+        Log.e(TAG, "goToSuccessPage: "+ statusText );
         Intent goToSuccessPage = new Intent(getApplicationContext(), ProvisionSuccessActivity.class);
-        Log.e(TAG,"goToSuccessPage 4");
-        goToSuccessPage.putExtra(AppConstants.KEY_STATUS_MSG, statusText);
-        Log.e(TAG,"goToSuccessPage 5");
+//        goToSuccessPage.putExtra("eztet",)
+        goToSuccessPage.putExtra(AppConstants.KEY_STATUS_MSG,statusText);
+
         goToSuccessPage.putExtras(getIntent());
-        Log.e(TAG,"goToSuccessPage 6");
+
         startActivity(goToSuccessPage);
-        Log.e(TAG,"goToSuccessPage 7");
+
     }
 }
